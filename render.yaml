@@ -5,3 +5,9 @@ services:
     dockerfilePath: ./backend/Dockerfile
     plan: free
     healthCheckPath: /docs
+  - type: static
+    name: language-detection-frontend
+    env: static
+    buildCommand: npm install --prefix frontend && npm run build --prefix frontend
+    publishPath: frontend/dist
+    plan: free
