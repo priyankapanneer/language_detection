@@ -16,7 +16,12 @@ app.add_middleware(
 
 
 MODEL_FILE = Path(__file__).parent.parent / 'models' / 'model.pkl'
-model = load_model(MODEL_FILE)
+
+
+@app.on_event('startup')
+async def startup_event():
+    # Load model during application startup to avoid heavy work at import time
+    app.state.model = load_model(MODEL_FILE)
 
 
 @app.post('/predict', response_model=PredictResponse)
@@ -25,6 +30,9 @@ def predict(req: PredictRequest):
     if not text:
         raise HTTPException(status_code=400, detail='Text is empty')
     try:
+        model = getattr(app.state, 'model', None)
+        if model is None:
+            raise RuntimeError('Model not loaded')
         lang, conf = predict_text(text, model)
         return PredictResponse(language=lang, confidence=round(conf, 4))
     except Exception as e:
